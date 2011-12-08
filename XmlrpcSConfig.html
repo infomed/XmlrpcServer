@@ -1,0 +1,95 @@
+<?PHP  PageTitle("Xmlrpc Server - Configuration");  ?>
+<?PHP 
+# convenience functions
+function pv($Value) {  print(htmlspecialchars($Value));  }
+?>
+
+<div class="content">
+<h1>Xmlrpc Server - Configuration</h1>
+<p>Ayuda para la configuracion</p>
+<p>El plugin XmlrpServer contiene un webservice que permite exportar recursos, 
+asi como insertar nuevos. En esta configuración usted podrá determinar que campos de un
+recurso estarán disponibles en los clientes para cada opción. En la instalación del plugin se asignan 
+los valores por defecto, que usted puede modificar. Seleccione en cada opción que campos incluir:  
+</p>
+<ul>
+<li>RETURN: campos que se desean exportar en los métodos que devuelven una lista de recursos.</li>
+<li>DETAIL: campos como información del detalle de un recurso.</li>
+<li>INSERT: campos de un recurso que el cliente debe brindar para insertar un recurso en CWIS.</li>
+<li>TEXTSEARCH: campos de un recurso donde se pueden hacer búsquedas de un texto.</li>
+<li>FILTER: campos de un recurso para definir la búsqueda o filtro avanzado.</li>
+<li>ORDER: campos por los que se puede ordenar una lista de recursos.</li>
+</ul>
+<?PHP  if (isset($G_ErrorMessages)) {  ?>
+<div class="ErrorBox"></ul>
+    <?PHP  foreach ($G_ErrorMessages as $Msg) {  ?>
+    <li><?PHP  print($Msg);  ?></li>
+    <?PHP  }  ?>
+</ul></div>
+<?PHP  }  ?>
+
+<form method="POST" action="index.php?P=P_XmlrpcServer_XmlrpcSConfig">
+<table class="ConfigTable" cellspacing="0" cellpadding="5" width="100%">
+    <tr><th colspan="7" > Available Fields for Xmlrpc Server Options</th></tr>
+    <input type="hidden" name="H_AvailableFCount" value="<?PHP pv(count($G_AvailableF)); ?>">
+    <tr>
+        <th></th>
+        <?PHP  
+       foreach ($G_IncludeIn as $key => $value){ ?>
+        <th><?PHP print $value; ?></th>
+       <?PHP } ?>
+    </tr>
+    <?PHP if (!count($G_AvailableF)) {  ?>
+        <tr><td><i>(no available fields have been defined)</i></td></tr>
+    <?PHP  
+    }
+    $Schema = new MetadataSchema();
+    $FieldNames = $Schema->GetFieldNames();
+    foreach ($FieldNames as $Id => $Name){ ?>
+    <tr><td><?PHP print htmlspecialchars($Name); ?></td>
+        <input type="hidden" name="<?PHP print 'H_FieldId'.$Id; ?>" value="<?PHP print $Id; ?>">
+        <?PHP  
+        foreach ($G_IncludeIn as $key => $value){ 
+          $check_b = 0; 
+          switch ($value) { 
+            case 'TextSearch':
+              $Field = new MetadataField($Id);
+              if($Field->IncludeInKeywordSearch() AND 
+                 in_array($Field->TypeAsName(), array('Text', 'Paragraph', 'Url')))
+                $check_b = 1;
+              break;
+            case 'Filter':
+              $Field = new MetadataField($Id);
+              if($Field->IncludeInAdvancedSearch() AND (!$Field->IncludeInKeywordSearch() OR 
+                 !in_array($Field->TypeAsName(), array('Text', 'Paragraph', 'Url'))))
+                $check_b = 1;
+              break;
+            case 'Order':
+              $Field = new MetadataField($Id);
+              if(!in_array($Field->TypeAsName(), array('ControlledName', 'Option', 'Tree')))
+                $check_b = 1;
+              break;
+            default:
+              $check_b = 1; 
+              break;
+          }
+          if ($check_b) { ?>
+            <td><INPUT type="checkbox" name="<?PHP print 'F_IncludeIn'.$value.'_'.$Id; ?>" value="<?PHP print $key; ?>"
+             <?PHP if (isset($G_AvailableF[$Id]) && in_array($key, $G_AvailableF[$Id])) print " checked"; ?> >
+            </td>
+          <?PHP
+          }
+          else { ?>
+            <td></td>
+          <?PHP
+          }
+        } ?>
+    </tr>
+    <?PHP } ?>
+</table>
+<input type="submit" name="Submit" value="Save Changes" />
+<input type="submit" name="Submit" value="Cancel" />
+</form>
+
+</div>
+
