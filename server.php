@@ -551,6 +551,26 @@ function ListAvailableFields() {
 					                    "DisplayOrderPosition" => new xmlrpcval(NULL, "int"),
 					                    "EditingOrderPosition" => new xmlrpcval(NULL, "int")
 					                   ), "struct");
+  $arrtmp[] = new xmlrpcval( array("FieldId" => new xmlrpcval(-2, "int"),
+					                    "FieldName" => new xmlrpcval('CwisPath', "string"),
+					                    "FieldType" => new xmlrpcval('Url', "string"),
+					                    "Description" => new xmlrpcval('The Path of Resource inside CWIS Repository', "string"),
+					                    "Optional" => new xmlrpcval(1, "int"),
+					                    "Return" => new xmlrpcval(1, "int"),
+					                    "Detail" => new xmlrpcval(1, "int"),
+					                    "Insert" => new xmlrpcval(0, "int"),
+					                    "TextSearch" => new xmlrpcval(0, "int"),
+					                    "Filter" => new xmlrpcval(0, "int"),
+					                    "Order" => new xmlrpcval(0, "int"),//?
+					                    "AllowMultiple" => new xmlrpcval(0, "int"),
+					                    "TextFieldSize" => new xmlrpcval(NULL, "int"),
+					                    "MaxLength" => new xmlrpcval(NULL, "int"),
+					                    "DefaultValue" => new xmlrpcval(NULL, "string"),
+					                    "MinValue" => new xmlrpcval(NULL, "int"),
+					                    "MaxValue" => new xmlrpcval(NULL, "int"),
+					                    "DisplayOrderPosition" => new xmlrpcval(3, "int"),
+					                    "EditingOrderPosition" => new xmlrpcval(NULL, "int")
+					                   ), "struct");
   $retStruct=new xmlrpcval();
   
   //get the Resources fields to export with xmlrpc
@@ -671,13 +691,30 @@ function ListVocabularies($m)
   $arrtmp = array();
   $total = @mysql_num_rows($fname_result); 
 
+  $real_tot = 0;  
   if ($total) {
 	 while ($field = @mysql_fetch_row($fname_result)){
-	   $arrtmp[] = new xmlrpcval( array("FieldId" => new xmlrpcval($field[0], "int"),
+      $fid = $field[0];
+      $ftype= $field[2];
+      switch($ftype){
+    	  case 'ControlledName':
+    	  case 'Option':
+          $count_elem=@mysql_fetch_row(@mysql_query("SELECT COUNT(*) FROM ControlledNames WHERE FieldId = $fid"));
+    	    break;
+    	  case 'Tree':
+          $count_elem=@mysql_fetch_row(@mysql_query("SELECT COUNT(*) FROM Classifications WHERE FieldId = $fid"));
+    	    break;
+      }
+	 	if($count_elem[0]){
+	     $arrtmp[] = new xmlrpcval( array("FieldId" => new xmlrpcval($fid, "int"),
 					                        "FieldName" => new xmlrpcval($field[1], "string"),
-					                        "FieldType" => new xmlrpcval($field[2], "string")
+					                        "FieldType" => new xmlrpcval($ftype, "string"),
+					                        "CountElem" => new xmlrpcval($count_elem[0], "int")
 					                       ), "struct");
+        $real_tot += 1;  
+     }    
     }
+    
   } 
   else {
     return new xmlrpcresp(0, $xmlrpcerruser, "No hay vocabularios disponibles para exportar con el ws.");
@@ -685,7 +722,7 @@ function ListVocabularies($m)
   	
   @mysql_free_result($fname_result);
 
-  $retStruct=new xmlrpcval(array("total" => new xmlrpcval($total, "int"),
+  $retStruct=new xmlrpcval(array("total" => new xmlrpcval($real_tot, "int"),
                                  "result"=> new xmlrpcval($arrtmp, "array")), 
                            "struct");
   return new xmlrpcresp($retStruct);
