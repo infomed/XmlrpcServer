@@ -51,6 +51,7 @@ los valores por defecto, que usted puede modificar. Seleccione en cada opción q
         <?PHP  
         foreach ($G_IncludeIn as $key => $value){ 
           $check_b = 0; 
+          $fId = $type = '';
           switch ($value) { 
             case 'TextSearch':
               $Field = new MetadataField($Id);
@@ -58,11 +59,49 @@ los valores por defecto, que usted puede modificar. Seleccione en cada opción q
                  in_array($Field->TypeAsName(), array('Text', 'Paragraph', 'Url')))
                 $check_b = 1;
               break;
+            case 'Insert':
+              $Field = new MetadataField($Id);
+              $type = $Field->TypeAsName(); 					 
+				  switch($type){
+					   case 'ControlledName':
+					   case 'Option':
+                    $count_elem=@mysql_fetch_row(@mysql_query("SELECT COUNT(*) FROM ControlledNames WHERE FieldId = $Id"));
+                    $check_b = $count_elem[0] ? 1 : 0;//if no elements dont show check box
+                    break;
+					   case 'Tree':
+                    $count_elem=@mysql_fetch_row(@mysql_query("SELECT COUNT(*) FROM Classifications WHERE FieldId = $Id"));
+                    $check_b = $count_elem[0] ? 1 : 0;//if no elements dont show check box
+                    break;
+                  default:
+					     $check_b = 1;
+                    break;
+              }
+              break;
             case 'Filter':
               $Field = new MetadataField($Id);
-              if($Field->IncludeInAdvancedSearch() AND (!$Field->IncludeInKeywordSearch() OR 
-                 !in_array($Field->TypeAsName(), array('Text', 'Paragraph', 'Url'))))
-                $check_b = 1;
+              $type = $Field->TypeAsName(); 					 
+              if($Field->IncludeInAdvancedSearch()) {
+					 switch($type){
+					   case 'Text':
+					   case 'Paragraph':
+					   case 'Url':
+                    if(!$Field->IncludeInKeywordSearch())
+                      $check_b = 1;
+                    break;
+					   case 'ControlledName':
+					   case 'Option':
+                    $count_elem=@mysql_fetch_row(@mysql_query("SELECT COUNT(*) FROM ControlledNames WHERE FieldId = $Id"));
+                    $check_b = $count_elem[0] ? 1 : 0;//if no elements dont show check box
+                    break;
+					   case 'Tree':
+                    $count_elem=@mysql_fetch_row(@mysql_query("SELECT COUNT(*) FROM Classifications WHERE FieldId = $Id"));
+                    $check_b = $count_elem[0] ? 1 : 0;//if no elements dont show check box
+                    break;
+                  default:
+					     $check_b = 1;
+                    break;
+                }              
+              }
               break;
             case 'Order':
               $Field = new MetadataField($Id);
@@ -80,7 +119,7 @@ los valores por defecto, que usted puede modificar. Seleccione en cada opción q
           <?PHP
           }
           else { ?>
-            <td></td>
+            <td><?PHP echo $fId; ?></td>
           <?PHP
           }
         } ?>

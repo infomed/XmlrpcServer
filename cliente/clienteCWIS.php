@@ -2,8 +2,8 @@
 include "xmlrpc.inc";
 
 //metodos disponibles en el ws
-$metodos[] = 'ListAvailableFields';
-//$metodos[] = 'ListVocabularies';
+//$metodos[] = 'ListAvailableFields';
+$metodos[] = 'ListVocabularies';
 //$metodos[] = 'ListVocabularyElements';
 //$metodos[] = 'GetResourceById';
 //$metodos[] = 'ListResources';
